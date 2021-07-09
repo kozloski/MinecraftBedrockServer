@@ -13,8 +13,15 @@ echo "Minecraft Bedrock Server installation script by James Chambers"
 echo "Latest version always at https://github.com/TheRemote/MinecraftBedrockServer"
 echo "Don't forget to set up port forwarding on your router!  The default port is 19132"
 
+# name of user running the script
+UserName=$(whoami)
+
+# url prefix for repository
+GITHUBURL=https://raw.githubusercontent.com/kozloski/MinecraftBedrockServer/master
+
 # Randomizer for user agent
 RandNum=$(echo $((1 + $RANDOM % 5000)))
+USERAGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.33 (KHTML, like Gecko) Chrome/90.0.$RandNum.212 Safari/537.33"
 
 # Function to read input from user with a prompt
 function read_with_prompt {
@@ -50,7 +57,7 @@ fi
 if [ -e "SetupMinecraft.sh" ]; then
   rm -f "SetupMinecraft.sh"
   echo "Local copy of SetupMinecraft.sh running.  Exiting and running online version..."
-  curl https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/SetupMinecraft.sh | bash
+  curl "${GITHUBURL}/SetupMinecraft.sh" | bash
   exit 1
 fi
 
@@ -131,7 +138,6 @@ if [ -d "$ServerName" ]; then
   echo "Directory minecraftbe/$ServerName already exists!  Updating scripts and configuring service ..."
 
   # Get username
-  UserName=$(whoami)
   cd $DirName
   cd minecraftbe
   cd $ServerName
@@ -142,7 +148,7 @@ if [ -d "$ServerName" ]; then
 
   # Download start.sh from repository
   echo "Grabbing start.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o start.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/start.sh
+  curl -H "Accept-Encoding: identity" -L -o start.sh "${GITHUBURL}/start.sh"
   chmod +x start.sh
   sed -i "s:dirname:$DirName:g" start.sh
   sed -i "s:servername:$ServerName:g" start.sh
@@ -151,7 +157,7 @@ if [ -d "$ServerName" ]; then
 
   # Download stop.sh from repository
   echo "Grabbing stop.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o stop.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/stop.sh
+  curl -H "Accept-Encoding: identity" -L -o stop.sh "${GITHUBURL}/stop.sh"
   chmod +x stop.sh
   sed -i "s:dirname:$DirName:g" stop.sh
   sed -i "s:servername:$ServerName:g" stop.sh
@@ -160,7 +166,7 @@ if [ -d "$ServerName" ]; then
 
   # Download restart.sh from repository
   echo "Grabbing restart.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o restart.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/restart.sh
+  curl -H "Accept-Encoding: identity" -L -o restart.sh "${GITHUBURL}/restart.sh"
   chmod +x restart.sh
   sed -i "s:dirname:$DirName:g" restart.sh
   sed -i "s:servername:$ServerName:g" restart.sh
@@ -169,7 +175,7 @@ if [ -d "$ServerName" ]; then
 
   # Download fixpermissions.sh from repository
   echo "Grabbing fixpermissions.sh from repository..."
-  curl -H "Accept-Encoding: identity" -L -o fixpermissions.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/fixpermissions.sh
+  curl -H "Accept-Encoding: identity" -L -o fixpermissions.sh "${GITHUBURL}/fixpermissions.sh"
   chmod +x fixpermissions.sh
   sed -i "s:dirname:$DirName:g" fixpermissions.sh
   sed -i "s:servername:$ServerName:g" fixpermissions.sh
@@ -177,7 +183,7 @@ if [ -d "$ServerName" ]; then
 
   # Update minecraft server service
   echo "Configuring Minecraft $ServerName service..."
-  sudo curl -H "Accept-Encoding: identity" -L -o /etc/systemd/system/$ServerName.service https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/minecraftbe.service
+  sudo curl -H "Accept-Encoding: identity" -L -o /etc/systemd/system/$ServerName.service "${GITHUBURL}/minecraftbe.service"
   sudo chmod +x /etc/systemd/system/$ServerName.service
   sudo sed -i "s:userxname:$UserName:g" /etc/systemd/system/$ServerName.service
   sudo sed -i "s:dirname:$DirName:g" /etc/systemd/system/$ServerName.service
@@ -246,7 +252,7 @@ if [[ "$CPUArch" == *"aarch"* || "$CPUArch" == *"arm"* ]]; then
   fi
   
   # Retrieve depends.zip from GitHub repository
-  curl -H "Accept-Encoding: identity" -L -o depends.zip https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/depends.zip
+  curl -H "Accept-Encoding: identity" -L -o depends.zip "${GITHUBURL}/depends.zip"
   unzip depends.zip
   sudo mkdir /lib64
   # Create soft link ld-linux-x86-64.so.2 mapped to ld-2.31.so
@@ -262,7 +268,7 @@ fi
 
 # Retrieve latest version of Minecraft Bedrock dedicated server
 echo "Checking for the latest version of Minecraft Bedrock server..."
-curl -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.33 (KHTML, like Gecko) Chrome/90.0.$RandNum.212 Safari/537.33" -o downloads/version.html https://minecraft.net/en-us/download/server/bedrock/
+curl -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "${USERAGENT}" -o downloads/version.html https://minecraft.net/en-us/download/server/bedrock/
 DownloadURL=$(grep -o 'https://minecraft.azureedge.net/bin-linux/[^"]*' downloads/version.html)
 DownloadFile=$(echo "$DownloadURL" | sed 's#.*/##')
 echo "$DownloadURL"
@@ -270,14 +276,13 @@ echo "$DownloadFile"
 
 # Download latest version of Minecraft Bedrock dedicated server
 echo "Downloading the latest version of Minecraft Bedrock server..."
-UserName=$(whoami)
-curl -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.33 (KHTML, like Gecko) Chrome/90.0.$RandNum.212 Safari/537.33" -o "downloads/$DownloadFile" "$DownloadURL"
+curl -H "Accept-Encoding: identity" -H "Accept-Language: en" -L -A "${USERAGENT}" -o "downloads/$DownloadFile" "$DownloadURL"
 unzip -o "downloads/$DownloadFile"
 chmod u+x bedrock_server
 
 # Download start.sh from repository
 echo "Grabbing start.sh from repository..."
-curl -H "Accept-Encoding: identity" -L -o start.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/start.sh
+curl -H "Accept-Encoding: identity" -L -o start.sh "${GITHUBURL}/start.sh"
 chmod +x start.sh
 sed -i "s:dirname:$DirName:g" start.sh
 sed -i "s:servername:$ServerName:g" start.sh
@@ -286,7 +291,7 @@ sed -i "s<pathvariable<$PATH<g" start.sh
 
 # Download stop.sh from repository
 echo "Grabbing stop.sh from repository..."
-curl -H "Accept-Encoding: identity" -L -o stop.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/stop.sh
+curl -H "Accept-Encoding: identity" -L -o stop.sh "${GITHUBURL}/stop.sh"
 chmod +x stop.sh
 sed -i "s:dirname:$DirName:g" stop.sh
 sed -i "s:servername:$ServerName:g" stop.sh
@@ -295,7 +300,7 @@ sed -i "s<pathvariable<$PATH<g" stop.sh
 
 # Download restart.sh from repository
 echo "Grabbing restart.sh from repository..."
-curl -H "Accept-Encoding: identity" -L -o restart.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/restart.sh
+curl -H "Accept-Encoding: identity" -L -o restart.sh "${GITHUBURL}/restart.sh"
 chmod +x restart.sh
 sed -i "s:dirname:$DirName:g" restart.sh
 sed -i "s:servername:$ServerName:g" restart.sh
@@ -304,7 +309,7 @@ sed -i "s<pathvariable<$PATH<g" restart.sh
 
 # Download fixpermissions.sh from repository
 echo "Grabbing fixpermissions.sh from repository..."
-curl -H "Accept-Encoding: identity" -L -o fixpermissions.sh https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/fixpermissions.sh
+curl -H "Accept-Encoding: identity" -L -o fixpermissions.sh "${GITHUBURL}/fixpermissions.sh"
 chmod +x fixpermissions.sh
 sed -i "s:dirname:$DirName:g" fixpermissions.sh
 sed -i "s:servername:$ServerName:g" fixpermissions.sh
@@ -312,7 +317,7 @@ sed -i "s:userxname:$UserName:g" fixpermissions.sh
 
 # Service configuration
 echo "Configuring Minecraft $ServerName service..."
-sudo curl -H "Accept-Encoding: identity" -L -o /etc/systemd/system/$ServerName.service https://raw.githubusercontent.com/TheRemote/MinecraftBedrockServer/master/minecraftbe.service
+sudo curl -H "Accept-Encoding: identity" -L -o /etc/systemd/system/$ServerName.service "${GITHUBURL}/minecraftbe.service"
 sudo chmod +x /etc/systemd/system/$ServerName.service
 sudo sed -i "s:userxname:$UserName:g" /etc/systemd/system/$ServerName.service
 sudo sed -i "s:dirname:$DirName:g" /etc/systemd/system/$ServerName.service
